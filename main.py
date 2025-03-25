@@ -5,7 +5,7 @@ CACHE_DIR = "cached_posts"
 BASE_PROMPTS_DIR = "prompt_builder/note/base_prompts"
 
 
-def fetch_note_posts(profile_url: str) -> str:
+def fetch_note_posts(profile_url: str, n_fetch: int = 3) -> str:
     # プロファイルURLでNoteFetcherを初期化
     note_fetcher = NoteFetcher(
         profile_url=profile_url,
@@ -21,7 +21,11 @@ def fetch_note_posts(profile_url: str) -> str:
     ret_text = [
         "*** 以下、過去の投稿 ***",
     ]
-    for _, post in posts.iterrows():
+
+    # 直近n_fetchの記事のみ出力
+    insert_posts = posts.sort_values(by=["published_at"], ascending=True).tail(n_fetch)
+    print(f"直近記事{n_fetch:,}のみ出力します")
+    for _, post in insert_posts.iterrows():
         _insert_post = [
             "=" * 10,
             f"投稿タイトル: {post['title']}",
@@ -48,6 +52,7 @@ def main():
     profile_url = "https://note.com/papa_salaryman"
     note_posts_text = fetch_note_posts(
         profile_url=profile_url,
+        n_fetch=1,
     )
     prompt = build_prompt(note_posts_text=note_posts_text)
 
