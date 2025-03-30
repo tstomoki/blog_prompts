@@ -20,6 +20,7 @@ class NotePromptBuilder:
         """
         self.base_prompts_dir = Path(base_prompts_dir)
         self.prefix_text = ""
+        self.blog_abstracts_text = ""
         self.body_text = ""
         self.thema_text = ""
         self.final_prompt = ""
@@ -33,6 +34,17 @@ class NotePromptBuilder:
             return self.prefix_text
         except FileNotFoundError:
             print(f"警告: {prefix_path} が見つかりません")
+            return ""
+
+    def load_blog_abstracts(self) -> str:
+        """blog_abstracts.txtからブログの要約テキストを読み込む"""
+        blog_abstracts_path = self.base_prompts_dir / "blog_abstracts.txt"
+        try:
+            with open(blog_abstracts_path, 'r', encoding='utf-8') as f:
+                self.blog_abstracts_text = f.read()
+            return self.blog_abstracts_text
+        except FileNotFoundError:
+            print(f"警告: {blog_abstracts_path} が見つかりません")
             return ""
 
     def load_body(self) -> str:
@@ -58,7 +70,7 @@ class NotePromptBuilder:
             print(f"警告: {thema_path} が見つかりません")
             return ""
 
-    def build(self, history_posts: str) -> str:
+    def build(self, latest_post: str) -> str:
         """
         最終的なプロンプトを構築する:
         1. すべてのテキストコンポーネントを読み込む
@@ -70,6 +82,7 @@ class NotePromptBuilder:
         """
         # すべてのテキストコンポーネントを読み込む
         self.load_prefix()
+        self.load_blog_abstracts()
         self.load_body()
         self.load_thema()
 
@@ -79,8 +92,12 @@ class NotePromptBuilder:
         # プレフィックスと本文を結合
         combined_text = self.prefix_text + self.body_text if self.prefix_text else self.body_text
 
-        # 過去の記事を挿入
-        self.final_prompt = combined_text.replace("{history_posts}", history_posts)
+        # 過去記事の要約を挿入
+        if self.blog_abstracts_text:
+            combined_text = combined_text.replace("{blog_abstracts}", self.blog_abstracts_text)
+
+        # 最新記事を挿入
+        self.final_prompt = combined_text.replace("{latest_post}", latest_post)
 
         # プレースホルダーをテーマで置換
         self.final_prompt = self.final_prompt.replace("{my_thema}", self.thema_text)

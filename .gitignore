@@ -175,3 +175,5 @@ cython_debug/
 
 
 cached_posts/
+abstract_prompts/
+body_prompts/
